@@ -80,7 +80,7 @@ class EpidemySimulator extends Simulator {
 
   class Person (val id: Int) {
     {
-      afterDelay(0)(if(infected) (afterDelay(SimConfig.infectedDays)(getSick)))
+      afterDelay(0)(initialCheck)
       move()
     }
     var infected = false
@@ -95,6 +95,19 @@ class EpidemySimulator extends Simulator {
     //
     // to complete with simulation logic
     //
+    def initialCheck() {
+      if(dead) {
+        myWorld.addSick(col, row)
+      } else if(sick) {
+        myWorld.addSick(col, row)
+        afterDelay(0)(getSick)
+      } else if(infected) {
+        infected = true
+        afterDelay(SimConfig.infectedDays)(getSick)
+      }
+      
+    }
+    
     def move() {
       afterDelay(1 + randomBelow(SimConfig.maxDays))(moveRoom)
     }
@@ -102,7 +115,7 @@ class EpidemySimulator extends Simulator {
     def moveRoom() {
       if(dead) return;
       
-      val possibleMoves = myWorld.neighboors(row, col) filter (_.livablePlace)
+      val possibleMoves = myWorld.neighboors(col, row) filter (_.livablePlace)
       if(possibleMoves.length > 0) {
         val randomRoom = possibleMoves(randomBelow(possibleMoves.length))
         changePlace(randomRoom.x, randomRoom.y)
@@ -141,7 +154,6 @@ class EpidemySimulator extends Simulator {
     def getImmune() {
       sick = false
       immune = true
-      infected = false
       myWorld.turnHealty(col, row)
       afterDelay(SimConfig.healthyDays)(getHealthy)
     }
