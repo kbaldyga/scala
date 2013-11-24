@@ -186,15 +186,14 @@ package object nodescala {
     /** Creates a new `CancellationTokenSource`.
      */
     def apply(): CancellationTokenSource = new CancellationTokenSource {
-      val promise = Promise[Unit]
-      
-      def cancellationToken: CancellationToken = new CancellationToken {
-        def isCancelled = promise.isCompleted
-      }
-      def unsubscribe(): Unit = {
-        if(!promise.isCompleted) promise.success(())
-      }
-    }
+	    val p = Promise[Unit]()
+	    val cancellationToken = new CancellationToken {
+	      def isCancelled = p.future.value != None
+	    }
+	    def unsubscribe() {
+	      p.trySuccess(())
+	    }
+	  }
   }
 }
 
