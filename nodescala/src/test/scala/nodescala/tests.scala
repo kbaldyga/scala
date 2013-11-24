@@ -27,7 +27,7 @@ class NodeScalaSuite extends FunSuite {
     val never = Future.never[Int]
 
     try {
-      Await.result(never, 1 second)
+      Await.result(never, 0.5 second)
       assert(false)
     } catch {
       case t: TimeoutException => // ok!
@@ -84,6 +84,28 @@ class NodeScalaSuite extends FunSuite {
       case t: Exception => // all ok!
     }
   }
+  
+  test("continewith catches exception in inside function") {
+   val result = Future[String] {
+      throw new IllegalStateException
+    } continueWith { f => "continued" }
+    assert(Await.result(result, 1 second) == "continued")
+  }
+  
+  test("contine catches an exception in inside function") {
+   val result = Future[String] {
+      throw new IllegalStateException
+    } continue { f => "continued" }
+    assert(Await.result(result, 1 second) == "continued")
+  }
+  
+  test("continue works in simple case") {}
+  val future = Future {1}
+  val result = future continue {
+    case Success(a) => a + a
+    case Failure(a) => 0
+  }
+  assert(Await.result(result, 1 second) == 2)
   
   test("CancellationTokenSource should allow stopping the computation") {
     val cts = CancellationTokenSource()
